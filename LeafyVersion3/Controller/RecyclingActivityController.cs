@@ -1,7 +1,9 @@
-﻿using LeafyVersion3.Contracts.Requests;
+﻿using LeafyVersion3.Services;
+using LeafyVersion3.Infrastructure.Model;
 using LeafyVersion3.Infrastructure.Repositories;
-using LeafyVersion3.Mappers;
+using LeafyVersion3.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
+using LeafyVersion3.Mappers;
 
 namespace LeafyVersion3.Controllers
 {
@@ -10,13 +12,20 @@ namespace LeafyVersion3.Controllers
     public class RecyclingActivityController : ControllerBase
     {
         private readonly IRecyclingActivityRepository _recyclingActivityRepository;
+        private readonly RecyclingSummaryService _recyclingSummaryService;
+        private readonly PointsCalculationService _pointsCalculationService;
 
-        public RecyclingActivityController(IRecyclingActivityRepository recyclingActivityRepository)
+        public RecyclingActivityController(
+            IRecyclingActivityRepository recyclingActivityRepository,
+            RecyclingSummaryService recyclingSummaryService,
+            PointsCalculationService pointsCalculationService)
         {
             _recyclingActivityRepository = recyclingActivityRepository;
+            _recyclingSummaryService = recyclingSummaryService;
+            _pointsCalculationService = pointsCalculationService;
         }
 
-        [HttpPost("create")]
+        [HttpPost()]
         public async Task<IActionResult> CreateActivity(CreateRecyclingActivityRequest request)
         {
             if (request == null)
@@ -26,12 +35,18 @@ namespace LeafyVersion3.Controllers
 
             var activityToInsert = request.MapToRecyclingActivity();
 
+            int points = _pointsCalculationService.CalculatePoints(request.MaterialType, request.Quantity);
+
+            activityToInsert.PointsAwarded = points;
+
             await _recyclingActivityRepository.Create(activityToInsert);
 
-            return CreatedAtAction(nameof(GetActivitiesById), new { id = activityToInsert.Id }, activityToInsert);
+            var response = activityToInsert.MapToResponse();
+            return CreatedAtAction(nameof(GetActivitiesById), new { id = activityToInsert.Id }, response);
         }
 
-        [HttpGet("getBy/{id}")]
+
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetActivitiesById(Guid id)
         {
             var activity = await _recyclingActivityRepository.GetByIdAsync(id);
@@ -46,16 +61,18 @@ namespace LeafyVersion3.Controllers
             return Ok(response);
         }
 
-        [HttpGet("getAll")]
+        [HttpGet()]
         public async Task<IActionResult> GetAllActivities()
         {
             var activities = await _recyclingActivityRepository.GetAllAsync();
-            var activitiesResponse = activities.MapToResponse();
 
+            var sortedActivities = activities.OrderByDescending(a => a.Date);
+
+            var activitiesResponse = sortedActivities.MapToResponse();
             return Ok(activitiesResponse);
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateActivity(Guid id, UpdateRecyclingActivityRequest request)
         {
             var activity = await _recyclingActivityRepository.GetByIdAsync(id);
@@ -72,7 +89,7 @@ namespace LeafyVersion3.Controllers
             return NoContent();
         }
 
-        [HttpDelete("delete-all")]
+        [HttpDelete()]
 
         public async Task<IActionResult> DeleteAll()
         {
@@ -80,7 +97,7 @@ namespace LeafyVersion3.Controllers
             return Ok("All activities have been deleted");
         }
 
-        [HttpDelete("deleteBy/{id}")]
+        [HttpDelete("{id}")]
 
         public async Task<IActionResult> DeleteById(Guid id)
         {
@@ -100,41 +117,15 @@ namespace LeafyVersion3.Controllers
         {
             var activities = await _recyclingActivityRepository.GetAllAsync();
 
-            if (activities == null || !activities.Any())
+            if (!activities.Any())
             {
                 return NotFound("No recycling activities found.");
             }
 
-            // Calculate the total quantity of all items recycled
-            var totalQuantity = activities.Sum(a => a.Quantity);
-
-            // Group activities by MaterialType and calculate total for each material
-            var materialBreakdown = activities
-                .GroupBy(a => a.MaterialType)
-                .Select(g => new
-                {
-                    MaterialType = g.Key,
-                    TotalQuantity = g.Sum(a => a.Quantity),
-                    Percentage = (g.Sum(a => a.Quantity) / totalQuantity) * 100
-                })
-                .ToList();
-
-            // Find the material with the highest percentage
-            var mostCommonMaterial = materialBreakdown
-                .OrderByDescending(m => m.TotalQuantity)
-                .FirstOrDefault();
-
-            var summary = new
-            {
-                TotalQuantity = totalQuantity,
-                Breakdown = materialBreakdown,
-                MostCommonMaterial = mostCommonMaterial  // Include the most common material in the response
-            };
+            var summary = _recyclingSummaryService.CalculateSummaryMetadata(activities);
 
             return Ok(summary);
         }
-
-
     }
 }
 

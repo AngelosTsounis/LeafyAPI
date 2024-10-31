@@ -37,6 +37,8 @@ namespace LeafyVersion3.Mappers
                 MaterialType = response.MaterialType,
                 Quantity = response.Quantity,
                 Date = response.Date,
+                PointsAwarded = response.PointsAwarded
+
             };
         }
 
@@ -45,6 +47,7 @@ namespace LeafyVersion3.Mappers
             return new RecyclingActivitiesResponse
             {
                 Items = responses.Select(MapToResponse),
+                
             };
         }
     }
