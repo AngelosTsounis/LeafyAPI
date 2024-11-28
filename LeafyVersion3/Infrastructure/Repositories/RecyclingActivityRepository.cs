@@ -61,5 +61,15 @@ namespace LeafyVersion3.Infrastructure.Repositories
                 await _context.SaveChangesAsync();  
             }
         }
+
+        public async Task<IEnumerable<RecyclingActivity>> GetAllByUserIdAsync(Guid userId)
+        {
+            var activities = await _context.RecyclingActivities
+                .Where(activity => activity.UserId == userId)
+                .ToListAsync();
+
+            Console.WriteLine($"Activities found for UserId {userId}: {activities.Count}");
+            return activities;
+        }
     }
 }

@@ -1,14 +1,20 @@
 ﻿using LeafyVersion3.Services;
 using LeafyVersion3.Infrastructure.Model;
 using LeafyVersion3.Infrastructure.Repositories;
+using System.Linq;
 using LeafyVersion3.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using LeafyVersion3.Mappers;
+using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace LeafyVersion3.Controllers
 {
+
     [ApiController]
     [Route("api/recyclingActivity")]
+    [Authorize]
     public class RecyclingActivityController : ControllerBase
     {
         private readonly IRecyclingActivityRepository _recyclingActivityRepository;
@@ -33,7 +39,15 @@ namespace LeafyVersion3.Controllers
                 return BadRequest("Activity data is missing");
             }
 
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
             var activityToInsert = request.MapToRecyclingActivity();
+            activityToInsert.UserId = Guid.Parse(userId); // Assign UserId to the activity
 
             int points = _pointsCalculationService.CalculatePoints(request.MaterialType, request.Quantity);
 
@@ -64,7 +78,20 @@ namespace LeafyVersion3.Controllers
         [HttpGet()]
         public async Task<IActionResult> GetAllActivities()
         {
-            var activities = await _recyclingActivityRepository.GetAllAsync();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine($"Extracted UserId from JWT: {userId}");
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var activities = await _recyclingActivityRepository.GetAllByUserIdAsync(Guid.Parse(userId));
+
+            if (!activities.Any())
+            {
+                return NotFound("No recycling activities found for this user.");
+            }
 
             var sortedActivities = activities.OrderByDescending(a => a.Date);
 
@@ -115,17 +142,25 @@ namespace LeafyVersion3.Controllers
         [HttpGet("summary")]
         public async Task<IActionResult> GetRecyclingSummary()
         {
-            var activities = await _recyclingActivityRepository.GetAllAsync();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var activities = await _recyclingActivityRepository.GetAllByUserIdAsync(Guid.Parse(userId));
 
             if (!activities.Any())
             {
-                return NotFound("No recycling activities found.");
+                return NotFound("No recycling activities found for this user.");
             }
 
             var summary = _recyclingSummaryService.CalculateSummaryMetadata(activities);
 
             return Ok(summary);
         }
+
     }
 }
 

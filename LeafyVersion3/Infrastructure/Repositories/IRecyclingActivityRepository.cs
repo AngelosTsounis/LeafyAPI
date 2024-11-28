@@ -9,5 +9,8 @@ namespace LeafyVersion3.Infrastructure.Repositories
         Task UpdateAsync(RecyclingActivity entity);
         Task DeleteAsync(Guid id);
         Task DeleteAllAsync();
+
+        Task<IEnumerable<RecyclingActivity>> GetAllByUserIdAsync(Guid userId);
+
     }
 }
