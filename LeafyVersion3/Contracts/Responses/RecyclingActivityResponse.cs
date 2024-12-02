@@ -6,6 +6,8 @@
         public required string MaterialType { get; set; }
         public required double Quantity { get; set; }
         public int PointsAwarded { get; set; }
+        public int TotalPoints { get; set; }
+        public string Location { get; set; }  
         public DateTime Date { get; set; } = DateTime.UtcNow;
     }
 }

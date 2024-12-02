@@ -110,6 +110,13 @@ namespace LeafyVersion3.Controllers
 
             activity.MaterialType = request.MaterialType;
             activity.Quantity = request.Quantity;
+            activity.Location = request.Location;
+
+            // Recalculate points based on new material and quantity
+            var pointsCalculationService = new PointsCalculationService();
+            int newPoints = pointsCalculationService.CalculatePoints(request.MaterialType, request.Quantity);
+
+            activity.PointsAwarded = newPoints;
 
             await _recyclingActivityRepository.UpdateAsync(activity);
 

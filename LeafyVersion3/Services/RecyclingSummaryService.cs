@@ -6,6 +6,7 @@ public class RecyclingSummaryService
     {
         // Calculate the total quantity of all items recycled
         var totalQuantity = activities.Sum(a => a.Quantity);
+        var totalPoints = activities.Sum(a => a.PointsAwarded);
 
         // Group activities by MaterialType and calculate total for each material
         var materialBreakdown = activities
@@ -14,6 +15,7 @@ public class RecyclingSummaryService
             {
                 MaterialType = g.Key,
                 TotalQuantity = g.Sum(a => a.Quantity),
+                TotalPoints = totalPoints,
                 Percentage = (g.Sum(a => a.Quantity) / totalQuantity) * 100
             })
             .ToList();

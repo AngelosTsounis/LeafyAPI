@@ -6,9 +6,9 @@ public class RecyclingActivity
 
     public required string MaterialType { get; set; }
     public required double Quantity { get; set; }
+    public required string Location { get; set; }
     public int PointsAwarded { get; set; }
     public DateTime Date { get; set; } = DateTime.UtcNow;
-
     // Correctly link UserId as a foreign key to User.Id
     public Guid UserId { get; set; } // This is the foreign key
     public User User { get; set; } = null!; // Navigation property

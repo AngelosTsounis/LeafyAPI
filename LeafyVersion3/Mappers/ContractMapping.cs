@@ -15,6 +15,7 @@ namespace LeafyVersion3.Mappers
                 Id = Guid.NewGuid(),
                 MaterialType = request.MaterialType,
                 Quantity = request.Quantity,
+                Location = request.Location,
             };
         }
 
@@ -25,6 +26,7 @@ namespace LeafyVersion3.Mappers
                 Id = Guid.NewGuid(),
                 MaterialType = request.MaterialType,
                 Quantity = request.Quantity,
+                Location = request.Location,
             };
         }
 
@@ -37,6 +39,7 @@ namespace LeafyVersion3.Mappers
                 MaterialType = response.MaterialType,
                 Quantity = response.Quantity,
                 Date = response.Date,
+                Location = response.Location,
                 PointsAwarded = response.PointsAwarded
 
             };
