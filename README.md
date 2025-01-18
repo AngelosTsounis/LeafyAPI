@@ -1,4 +1,4 @@
-# Leafy API
+# Leafy API Documentation
 
 This is the backend service for the Leafy app, built using **.NET 8** with **Entity Framework** for the database layer. The backend provides APIs for user authentication, recycling activity management, and recycling summaries.
 
