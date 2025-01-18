@@ -120,4 +120,4 @@ The following settings are defined in `appsettings.json`. Update them as needed:
 
 ## Contributing
 
-Feel free to submit issues or feature requests by opening an issue in the repository. Contributions are welcome!
+Feel free to submit issues or feature requests.
