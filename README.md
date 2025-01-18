@@ -58,7 +58,7 @@ Run the backend simply by starting with debugger or by using the following comma
 dotnet run
 ```
 
-By default, the server will start on ` http://localhost:5182`.
+By default, the server will start on ` http://localhost:7007`.
 
 ---
 
@@ -79,7 +79,7 @@ By default, the server will start on ` http://localhost:5182`.
 
 Once the backend is running, you can test the API directly via Swagger:
 
-- Navigate to: `https://localhost:5001/swagger`
+- Navigate to: `https://localhost:7007/swagger`
 
 ---
 
