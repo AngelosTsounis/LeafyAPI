@@ -52,13 +52,13 @@ dotnet ef database update
 
 ### 4. Run the Backend
 
-Run the backend using the following command:
+Run the backend simply by starting with debugger or by using the following command:
 
 ```bash
 dotnet run
 ```
 
-By default, the server will start on `https://localhost:5001`.
+By default, the server will start on ` http://localhost:5182`.
 
 ---
 
