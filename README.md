@@ -92,7 +92,7 @@ Once the backend is running, you can test the API directly via Swagger:
    - Double-check your connection string in `appsettings.json`.
 
 2. **CORS Issues**:
-   - Ensure the React frontend is running on `http://localhost:3002`.
+   - Ensure the React frontend is running on `http://localhost:3002` (if not, check the client localhost and change it in your Program.cs line 57.).
    - The backend allows requests from this origin by default.
 
 3. **Entity Framework CLI Not Found**:
