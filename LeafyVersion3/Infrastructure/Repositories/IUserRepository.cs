@@ -5,11 +5,11 @@ namespace LeafyVersion3.Infrastructure.Repositories
 {
     public interface IUserRepository
     {
-        Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByUsernameAsync(string username);
         Task<User?> GetUserByIdAsync(Guid userId);
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task UpdateUserAsync(User entity);
         Task CreateUserAsync(User user);
+        Task<bool> UsernameExistsAsync(string username);
     }
 }

@@ -11,10 +11,6 @@ namespace LeafyVersion3.Infrastructure.Repositories
         public UserRepository(AppDbContext? context) { 
             _context = context; 
         }
-        public async Task<User?> GetUserByEmailAsync(string email)
-        {
-            return await _context!.Users.FirstOrDefaultAsync(u => u.Email == email);
-        }
 
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
@@ -34,13 +30,34 @@ namespace LeafyVersion3.Infrastructure.Repositories
 
         public async Task UpdateUserAsync(User entity)
         {
-            _context!.Users.Update(entity);
+            var existingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == entity.Id);
+
+            if (existingUser == null)
+            {
+                throw new InvalidOperationException("User not found.");
+            }
+
+            if (entity.Username != existingUser.Username)
+            {
+                _context.Entry(entity).Property(e => e.Username).IsModified = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(entity.PasswordHash) && entity.PasswordHash != existingUser.PasswordHash)
+            {
+                _context.Entry(entity).Property(e => e.PasswordHash).IsModified = true;
+            }
+
             await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
             return await _context.Users.ToListAsync();
+        }
+
+        public async Task<bool> UsernameExistsAsync(string username)
+        {
+            return await _context.Users.AnyAsync(u => u.Username == username); // Adjust to your model
         }
     }
 }

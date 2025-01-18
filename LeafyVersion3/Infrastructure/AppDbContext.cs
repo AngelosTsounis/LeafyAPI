@@ -13,12 +13,12 @@ namespace LeafyAPI.Infrastructure.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure the one-to-many relationship
+           
             modelBuilder.Entity<RecyclingActivity>()
                 .HasOne(r => r.User)
-                .WithMany() // If you don’t want to add a collection in User
-                .HasForeignKey(r => r.UserId) // Maps UserId in RecyclingActivity to Id in User
-                .OnDelete(DeleteBehavior.Cascade); // Deletes recycling activities when user is deleted
+                .WithMany()  
+                .HasForeignKey(r => r.UserId)  
+                .OnDelete(DeleteBehavior.Cascade);  
         }
     }
 }

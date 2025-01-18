@@ -15,13 +15,13 @@ namespace LeafyVersion3.Services
                     break;
 
                 case "metal":
-                    points = (int)(Quantity * 5);
+                    points = (int)(Quantity * 4);
                     break;
                 case "paper":
-                    points = (int)(Quantity * 3);
+                    points = (int)(Quantity * 1);
                     break;
                 case "plastic":
-                    points = (int)(Quantity * 4);
+                    points = (int)(Quantity * 3);
                     break;
                 default:
                     points = 0;

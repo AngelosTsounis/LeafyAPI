@@ -8,6 +8,7 @@ using LeafyVersion3.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using FluentValidation;
 
 namespace LeafyVersion3.Controllers
 {
@@ -20,20 +21,36 @@ namespace LeafyVersion3.Controllers
         private readonly IRecyclingActivityRepository _recyclingActivityRepository;
         private readonly RecyclingSummaryService _recyclingSummaryService;
         private readonly PointsCalculationService _pointsCalculationService;
+        private readonly IValidator<CreateRecyclingActivityRequest> _validator;
+        private readonly IValidator<UpdateRecyclingActivityRequest> _updateValidator;
+
 
         public RecyclingActivityController(
             IRecyclingActivityRepository recyclingActivityRepository,
             RecyclingSummaryService recyclingSummaryService,
-            PointsCalculationService pointsCalculationService)
+            PointsCalculationService pointsCalculationService,
+            IValidator<CreateRecyclingActivityRequest> validator,
+            IValidator<UpdateRecyclingActivityRequest> updateValidator)
         {
             _recyclingActivityRepository = recyclingActivityRepository;
             _recyclingSummaryService = recyclingSummaryService;
             _pointsCalculationService = pointsCalculationService;
+            _validator = validator;
+            _updateValidator = updateValidator;
         }
 
         [HttpPost()]
         public async Task<IActionResult> CreateActivity(CreateRecyclingActivityRequest request)
         {
+            var validationResult = await _validator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.Select(e => new
+                {
+                    e.PropertyName,
+                    e.ErrorMessage
+                }));
+            }
             if (request == null)
             {
                 return BadRequest("Activity data is missing");
@@ -47,7 +64,7 @@ namespace LeafyVersion3.Controllers
             }
 
             var activityToInsert = request.MapToRecyclingActivity();
-            activityToInsert.UserId = Guid.Parse(userId); // Assign UserId to the activity
+            activityToInsert.UserId = Guid.Parse(userId);  
 
             int points = _pointsCalculationService.CalculatePoints(request.MaterialType, request.Quantity);
 
@@ -102,6 +119,16 @@ namespace LeafyVersion3.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateActivity(Guid id, UpdateRecyclingActivityRequest request)
         {
+
+            var validationResult = await _updateValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.Select(e => new
+                {
+                    e.PropertyName,
+                    e.ErrorMessage
+                }));
+            }
             var activity = await _recyclingActivityRepository.GetByIdAsync(id);
             if (activity == null)
             {

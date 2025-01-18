@@ -1,4 +1,5 @@
-﻿using LeafyVersion3.Contracts.Requests;
+﻿using FluentValidation;
+using LeafyVersion3.Contracts.Requests;
 using LeafyVersion3.Infrastructure.Model;
 using LeafyVersion3.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -13,19 +14,28 @@ public class UserController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly JwtTokenGenerator _jwtTokenGenerator;
+    private readonly IValidator<SignUpRequest> _signUpValidator;
+    private readonly IValidator<UpdateUserRequest> _updateUserValidator;
 
-    public UserController(IUserRepository userRepository, JwtTokenGenerator jwtTokenGenerator)
+    public UserController(IUserRepository userRepository, JwtTokenGenerator jwtTokenGenerator, IValidator<SignUpRequest> signUpValidator, IValidator<UpdateUserRequest> updateUserValidator)
     {
         _userRepository = userRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _signUpValidator = signUpValidator;
+        _updateUserValidator = updateUserValidator;
     }
 
     [HttpPost("signup")]
     public async Task<IActionResult> SignUp([FromBody] SignUpRequest request)
     {
-        if (await _userRepository.GetUserByEmailAsync(request.Email) != null)
+        var validationResult = await _signUpValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
         {
-            return BadRequest("Email is already taken.");
+            return BadRequest(validationResult.Errors.Select(e => new
+            {
+                e.PropertyName,
+                e.ErrorMessage
+            }));
         }
 
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -33,7 +43,6 @@ public class UserController : ControllerBase
         var user = new User
         {
             Username = request.Username,
-            Email = request.Email,
             PasswordHash = hashedPassword
         };
 
@@ -78,28 +87,46 @@ public class UserController : ControllerBase
         {   
             user.Id,
             user.Username,
-            user.Email,
         });
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request)
     {
+        // Attach the userId to the request for validation
+        request.UserId = id;
+
+        var validationResult = await _updateUserValidator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors.Select(e => new
+            {
+                e.PropertyName,
+                e.ErrorMessage
+            }));
+        }
+
         var user = await _userRepository.GetUserByIdAsync(id);
         if (user == null)
         {
             return NotFound();
         }
-        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash);
 
-        user.Username = request.Username;
-        user.Email = request.Email;
-        user.PasswordHash = hashedPassword;
+        if (!string.IsNullOrWhiteSpace(request.Username))
+        {
+            user.Username = request.Username;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.PasswordHash))
+        {
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.PasswordHash);
+        }
 
         await _userRepository.UpdateUserAsync(user);
 
         return NoContent();
     }
+
 
 
     [HttpGet("all")]
@@ -112,7 +139,6 @@ public class UserController : ControllerBase
         {
             user.Id,
             user.Username,
-            user.Email,
             Password = user.PasswordHash, 
         });
 
